@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}{% if workout %}Edit Workout{% else %}New Workout{% endif %}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">{% if workout %}Edit Workout{% else %}Log New Workout{% endif %}</h1>
+            <p class="mt-1 text-sm text-gray-500">{% if workout %}Update your workout details below.{% else %}Record your workout session with exercises and sets.{% endif %}</p>
+        </div>
+        <a href="/workouts" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors duration-200">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back
+        </a>
+    </div>
+</div>
+
+{% if templates is defined and templates|length > 0 and not workout %}
+<div class="mb-6 bg-white border border-gray-200 rounded-lg p-4">
+    <label for="template-selector" class="block text-sm font-medium text-gray-700 mb-2">Load from Template</label>
+    <div class="flex items-center gap-3">
+        <select id="template-selector" class="flex-1 border border-gray-300 rounded-md px-3 py-2 min-h-[44px] text-sm focus:ring-primary-500 focus:border-primary-500">
+            <option value="">-- Select a template --</option>
+            {% for tmpl in templates %}
+                <option value="{{ tmpl.id }}">{{ tmpl.name }}{% if tmpl.description %} — {{ tmpl.description }}{% endif %}</option>
+            {% endfor %}
+        </select>
+        <span class="text-xs text-gray-400">Fills exercises below</span>
+    </div>
+</div>
+{% endif %}
+
+<form id="workout-form" method="POST" action="{% if workout %}/workouts/{{ workout.id }}/edit{% else %}/workouts/new{% endif %}" data-validate class="pb-24 md:pb-8">
+
+    <div class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Workout Details</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label for="workout-name" class="block text-sm font-medium text-gray-700 mb-1">Workout Name <span class="text-red-500">*</span></label>
+                <input type="text" id="workout-name" name="name" value="{{ workout.name if workout else '' }}" required placeholder="e.g. Push Day, Leg Day" class="w-full border border-gray-300 rounded-md px-3 py-2 min-h-[44px] text-sm focus:ring-primary-500 focus:border-primary-500">
+            </div>
+
+            <div>
+                <label for="workout-date" class="block text-sm font-medium text-gray-700 mb-1">Date <span class="text-red-500">*</span></label>
+                <input type="date" id="workout-date" name="workout_date" value="{{ workout.workout_date if workout else today }}" required class="w-full border border-gray-300 rounded-md px-3 py-2 min-h-[44px] text-sm focus:ring-primary-500 focus:border-primary-500">
+            </div>
+
+            <div>
+                <label for="workout-duration" class="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="workout-duration" name="duration_minutes" value="{{ workout.duration_minutes if workout and workout.duration_minutes else '' }}" min="0" placeholder="e.g. 60" class="flex-1 border border-gray-300 rounded-md px-3 py-2 min-h-[44px] text-sm focus:ring-primary-500 focus:border-primary-500">
+                    <span id="workout-timer" class="text-sm font-mono text-gray-500 hidden sm:inline">00:00</span>
+                    <button type="button" id="timer-start" class="inline-flex items-center px-2 py-1 text-xs font-medium text-primary-600 bg-primary-50 border border-primary-200 rounded hover:bg-primary-100 min-h-[36px] min-w-[44px] justify-center transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Start
+                    </button>
+                    <button type="button" id="timer-stop" class="hidden inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100 min-h-[36px] min-w-[44px] justify-center transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
+                        Stop
+                    </button>
+                </div>
+            </div>
+
+            <div class="sm:col-span-2">
+                <label for="workout-notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea id="workout-notes" name="notes" rows="2" placeholder="How did the workout feel? Any observations..." class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500">{{ workout.notes if workout and workout.notes else '' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-800">Exercises</h2>
+            <button type="button" id="add-exercise-btn" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors duration-200 min-h-[44px] shadow-sm">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add Exercise
+            </button>
+        </div>
+
+        <div id="exercises-container">
+            {% if workout and workout.exercises %}
+                {% for we in workout.exercises %}
+                <div class="bg-white border border-gray-200 rounded-lg p-4 mb-4" data-exercise-index="{{ loop.index0 }}">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-lg font-semibold text-gray-700">Exercise <span class="exercise-number">{{ loop.index }}</span></h4>
+                        <button type="button" class="remove-exercise-btn text-red-500 hover:text-red-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center" title="Remove exercise">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </div>
+                    <input type="hidden" name="exercises[{{ loop.index0 }}][sort_order]" value="{{ loop.index }}" class="sort-order-input">
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Exercise</label>
+                        <select name="exercises[{{ loop.index0 }}][exercise_id]" class="exercise-select w-full border border-gray-300 rounded-md px-3 py-2 min-h-[44px] focus:ring-primary-500 focus:border-primary-500" required>
+                            <option value="">Select an exercise</option>
+                            {% for ex in exercises %}
+                                <option value="{{ ex.id }}" {% if ex.id == we.exercise_id %}selected{% endif %}>{{ ex.name }} ({{ ex.muscle_group }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                        <input type="text" name="exercises[{{ loop.index0 }}][notes]" value="{{ we.notes if we.notes else '' }}" class="w-full border border-gray-300 rounded-md px-3 py-2 min-h-[44px] text-sm focus:ring-primary-500 focus:border-primary-500" placeholder="Exercise notes (optional)">
+                    </div>
+                    <div class="sets-container mb-3">
+                        <div class="flex items-center justify-between mb-2">
+                            <h5 class="text-sm font-semibold text-gray-600">Sets</h5>
+                            <button type="button" class="add-set-btn text-blue-600 hover:text-blue-800 text-sm font-medium p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">+ Add Set</button>
+                        </div>
+                        <div class="sets-list">
+                            {% for s in we.sets %}
+                            <div class="flex items-center gap-2 mb-2 p-2 bg-gray-50 rounded" data-set-row="{{ s.set_number }}">
+                                <span class="text-sm font-medium text-gray-500 w-8 set-number">{{ s.set_number }}</span>
+                                <input type="hidden" name="exercises[{{ loop.parent.loop.index0 }}][sets][{{ loop.index0 }}][set_number]" value="{{ s.set_number }}" class="set-number-input">
+                                <div class="flex-1">
+                                    <input type="number" name="exercises[{{ loop.parent.loop.index0 }}][sets][{{ loop.index0 }}][weight]" value="{{ s.weight if s.weight is not none else '' }}" step="0.5" min="0" class="w-full border border-gray-300 rounded px-2 py-1 text-sm min-h-[44px] focus:ring-primary-500 focus:border-primary-500" placeholder="Weight (kg)">
+                                </div>
+                                <div class="flex-1">
+                                    <input type="number" name="exercises[{{ loop.parent.loop.index0 }}][sets][{{ loop.index0 }}][reps]" value="{{ s.reps }}" min="1" class="w-full border border-gray-300 rounded px-2 py-1 text-sm min-h-[44px] focus:ring-primary-500 focus:border-primary-500" placeholder="Reps" required>
+                                </div>
+                                <button type="button" class="remove-set-btn text-red-400 hover:text-red-600 p-1 min-w-[44px] min-h-[44px] flex items-center justify-center" title="Remove set">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div id="no-exercises-message" class="{% if workout and workout.exercises and workout.exercises|length > 0 %}hidden{% endif %} text-center py-8 bg-white border-2 border-dashed border-gray-300 rounded-lg">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No exercises added</h3>
+            <p class="mt-1 text-sm text-gray-500">Click "Add Exercise" to start building your workout.</p>
+        </div>
+    </div>
+
+    <!-- Desktop save button -->
+    <div class="hidden md:flex justify-end gap-3">
+        <a href="/workouts" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors duration-200">
+            Cancel
+        </a>
+        <button type="submit" class="inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors duration-200 shadow-sm">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            {% if workout %}Update Workout{% else %}Save Workout{% endif %}
+        </button>
+    </div>
+
+    <!-- Mobile sticky save bar -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 shadow-lg z-40">
+        <div class="flex gap-3">
+            <a href="/workouts" class="flex-1 inline-flex items-center justify-center px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors duration-200 min-h-[48px]">
+                Cancel
+            </a>
+            <button type="submit" class="flex-1 inline-flex items-center justify-center px-4 py-3 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors duration-200 shadow-sm min-h-[48px]">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                {% if workout %}Update{% else %}Save{% endif %}
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Hidden select used by JS to clone exercise options into dynamically added rows -->
+<select id="exercise-options-source" class="hidden">
+    {% if exercises is defined %}
+        {% for ex in exercises %}
+            <option value="{{ ex.id }}">{{ ex.name }} ({{ ex.muscle_group }})</option>
+        {% endfor %}
+    {% endif %}
+</select>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/app.js"></script>
+<script>
+(function() {
+    "use strict";
+
+    var container = document.getElementById("exercises-container");
+    var noExercisesMsg = document.getElementById("no-exercises-message");
+
+    function updateEmptyState() {
+        if (!container || !noExercisesMsg) return;
+        var exercises = container.querySelectorAll("[data-exercise-index]");
+        if (exercises.length === 0) {
+            noExercisesMsg.classList.remove("hidden");
+        } else {
+            noExercisesMsg.classList.add("hidden");
+        }
+    }
+
+    if (container) {
+        var observer = new MutationObserver(function() {
+            updateEmptyState();
+        });
+        observer.observe(container, { childList: true, subtree: false });
+    }
+
+    var addBtn = document.getElementById("add-exercise-btn");
+    if (addBtn) {
+        var originalClick = addBtn.onclick;
+        addBtn.addEventListener("click", function() {
+            setTimeout(updateEmptyState, 50);
+        });
+    }
+
+    updateEmptyState();
+})();
+</script>
+{% endblock %}

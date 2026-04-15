@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block title %}Exercise Library{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Exercise Library</h1>
+            <p class="mt-1 text-sm text-gray-500">Browse and search exercises by muscle group and equipment</p>
+        </div>
+        {% if user and user.role == 'admin' %}
+            <a href="/exercises/new" class="inline-flex items-center justify-center px-4 py-2 min-h-[44px] rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors duration-200 shadow-sm">
+                <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Add Exercise
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+    <form method="GET" action="/exercises" class="space-y-4">
+        <!-- Search Bar -->
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+            </div>
+            <input type="text" name="search" value="{{ search or '' }}" placeholder="Search exercises by name..." class="block w-full pl-10 pr-3 py-2 min-h-[44px] border border-gray-300 rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+        </div>
+
+        <!-- Muscle Group Filter Chips -->
+        <div>
+            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Muscle Group</h3>
+            <div class="flex flex-wrap gap-2">
+                <a href="/exercises?{% if search %}search={{ search }}&{% endif %}{% if equipment %}equipment={{ equipment }}&{% endif %}page=1"
+                   class="inline-flex items-center px-3 py-1.5 min-h-[36px] rounded-full text-sm font-medium transition-colors duration-200 {% if not muscle_group %}bg-gray-800 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    All
+                </a>
+                {% set muscle_groups_list = [
+                    ('chest', 'bg-red-100 text-red-800 hover:bg-red-200', 'bg-red-600 text-white'),
+                    ('back', 'bg-blue-100 text-blue-800 hover:bg-blue-200', 'bg-blue-600 text-white'),
+                    ('shoulders', 'bg-purple-100 text-purple-800 hover:bg-purple-200', 'bg-purple-600 text-white'),
+                    ('biceps', 'bg-orange-100 text-orange-800 hover:bg-orange-200', 'bg-orange-600 text-white'),
+                    ('triceps', 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200', 'bg-yellow-600 text-white'),
+                    ('legs', 'bg-green-100 text-green-800 hover:bg-green-200', 'bg-green-600 text-white'),
+                    ('glutes', 'bg-pink-100 text-pink-800 hover:bg-pink-200', 'bg-pink-600 text-white'),
+                    ('core', 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200', 'bg-indigo-600 text-white'),
+                    ('forearms', 'bg-teal-100 text-teal-800 hover:bg-teal-200', 'bg-teal-600 text-white'),
+                    ('cardio', 'bg-cyan-100 text-cyan-800 hover:bg-cyan-200', 'bg-cyan-600 text-white'),
+                    ('full body', 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200', 'bg-emerald-600 text-white')
+                ] %}
+                {% for mg, inactive_cls, active_cls in muscle_groups_list %}
+                    <a href="/exercises?muscle_group={{ mg }}{% if search %}&search={{ search }}{% endif %}{% if equipment %}&equipment={{ equipment }}{% endif %}&page=1"
+                       class="inline-flex items-center px-3 py-1.5 min-h-[36px] rounded-full text-sm font-medium transition-colors duration-200 {% if muscle_group == mg %}{{ active_cls }}{% else %}{{ inactive_cls }}{% endif %}">
+                        {{ mg|capitalize }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Equipment Filter Chips -->
+        <div>
+            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Equipment</h3>
+            <div class="flex flex-wrap gap-2">
+                <a href="/exercises?{% if search %}search={{ search }}&{% endif %}{% if muscle_group %}muscle_group={{ muscle_group }}&{% endif %}page=1"
+                   class="inline-flex items-center px-3 py-1.5 min-h-[36px] rounded-full text-sm font-medium transition-colors duration-200 {% if not equipment %}bg-gray-800 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    All
+                </a>
+                {% set equipment_list = ['barbell', 'dumbbell', 'cable', 'machine', 'bodyweight', 'kettlebell', 'resistance band', 'other'] %}
+                {% for eq in equipment_list %}
+                    <a href="/exercises?equipment={{ eq }}{% if search %}&search={{ search }}{% endif %}{% if muscle_group %}&muscle_group={{ muscle_group }}{% endif %}&page=1"
+                       class="inline-flex items-center px-3 py-1.5 min-h-[36px] rounded-full text-sm font-medium transition-colors duration-200 {% if equipment == eq %}bg-gray-800 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                        {{ eq|capitalize }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Hidden submit for search -->
+        {% if muscle_group %}
+            <input type="hidden" name="muscle_group" value="{{ muscle_group }}">
+        {% endif %}
+        {% if equipment %}
+            <input type="hidden" name="equipment" value="{{ equipment }}">
+        {% endif %}
+        <input type="hidden" name="page" value="1">
+        <div class="flex items-center gap-3">
+            <button type="submit" class="inline-flex items-center px-4 py-2 min-h-[44px] rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors duration-200 shadow-sm">
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                Search
+            </button>
+            {% if search or muscle_group or equipment %}
+                <a href="/exercises" class="inline-flex items-center px-4 py-2 min-h-[44px] rounded-md text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors duration-200">
+                    Clear Filters
+                </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Results Summary -->
+<div class="flex items-center justify-between mb-4">
+    <p class="text-sm text-gray-600">
+        {% if total is defined and total is not none %}
+            Showing {{ exercises|length }} of {{ total }} exercise{{ 's' if total != 1 else '' }}
+        {% else %}
+            {{ exercises|length }} exercise{{ 's' if exercises|length != 1 else '' }} found
+        {% endif %}
+    </p>
+</div>
+
+<!-- Exercise Cards Grid -->
+{% if exercises and exercises|length > 0 %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+        {% for exercise in exercises %}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 flex flex-col">
+                <div class="p-4 flex-1">
+                    <div class="flex items-start justify-between mb-3">
+                        <h3 class="text-base font-semibold text-gray-900 leading-tight">
+                            <a href="/exercises/{{ exercise.id }}" class="hover:text-primary-600 transition-colors duration-200">
+                                {{ exercise.name }}
+                            </a>
+                        </h3>
+                        {% if user and user.role == 'admin' %}
+                            <div class="flex items-center gap-1 ml-2 flex-shrink-0">
+                                <a href="/exercises/{{ exercise.id }}/edit" class="p-1.5 min-w-[36px] min-h-[36px] flex items-center justify-center text-gray-400 hover:text-primary-600 rounded transition-colors duration-200" title="Edit exercise">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                    </svg>
+                                </a>
+                                <form method="POST" action="/exercises/{{ exercise.id }}/delete" class="inline" data-confirm-submit="Are you sure you want to delete '{{ exercise.name }}'? This action cannot be undone.">
+                                    <button type="submit" class="p-1.5 min-w-[36px] min-h-[36px] flex items-center justify-center text-gray-400 hover:text-red-600 rounded transition-colors duration-200" title="Delete exercise">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Badges -->
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <!-- Muscle Group Badge -->
+                        {% set mg_lower = exercise.muscle_group|lower if exercise.muscle_group else '' %}
+                        {% if mg_lower == 'chest' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">{{ exercise.muscle_group }}</span>
+                        {% elif mg_lower == 'back' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{{ exercise.muscle_group }}</span>
+                        {% elif mg_lower == 'shoulders' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">{{ exercise.muscle_group }}</span>
+                        {% elif mg_lower == 'biceps' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">{{ exercise.muscle_group }}</span>
+                        {% elif mg_lower == 'triceps' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">{{ exercise.muscle_group }}</span>
+                        {% elif mg_lower == 'legs' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{{ exercise.muscle_group }}</span>
+                        {% elif mg_lower == 'glutes' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800">{{ exercise.muscle_group }}</span>
+                        {% elif mg_lower == 'core' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">{{ exercise.muscle_group }}</span>
+                        {% elif mg_lower == 'forearms' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">{{ exercise.muscle_group }}</span>
+                        {% elif mg_lower == 'cardio' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800">{{ exercise.muscle_group }}</span>
+                        {% elif mg_lower == 'full body' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">{{ exercise.muscle_group }}</span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{{ exercise.muscle_group }}</span>
+                        {% endif %}
+
+                        <!-- Equipment Badge -->
+                        {% if exercise.equipment %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17l-5.384-3.19A1.5 1.5 0 015 10.62V6.75a1.5 1.5 0 011.036-1.43l5.384-1.794a1.5 1.5 0 01.948 0l5.384 1.794A1.5 1.5 0 0118.75 6.75v3.87a1.5 1.5 0 01-1.036 1.36l-5.384 3.19a1.5 1.5 0 01-.91 0z" />
+                                </svg>
+                                {{ exercise.equipment }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- PR Badge -->
+                    {% if personal_records and exercise.id in personal_records %}
+                        <div class="flex flex-wrap gap-1.5 mb-3">
+                            {% set pr = personal_records[exercise.id] %}
+                            {% if pr.weight %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 1l2.928 6.856L20 8.588l-5.072 4.568L16.18 20 10 16.26 3.82 20l1.252-6.844L0 8.588l7.072-.732L10 1z" clip-rule="evenodd" />
+                                    </svg>
+                                    PR: {{ pr.weight }} kg
+                                </span>
+                            {% endif %}
+                            {% if pr.reps %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 1l2.928 6.856L20 8.588l-5.072 4.568L16.18 20 10 16.26 3.82 20l1.252-6.844L0 8.588l7.072-.732L10 1z" clip-rule="evenodd" />
+                                    </svg>
+                                    PR: {{ pr.reps }} reps
+                                </span>
+                            {% endif %}
+                            {% if pr.volume %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 1l2.928 6.856L20 8.588l-5.072 4.568L16.18 20 10 16.26 3.82 20l1.252-6.844L0 8.588l7.072-.732L10 1z" clip-rule="evenodd" />
+                                    </svg>
+                                    Vol: {{ pr.volume }} kg
+                                </span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Instructions Preview -->
+                    {% if exercise.instructions %}
+                        <p class="text-sm text-gray-500 line-clamp-2">{{ exercise.instructions }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Card Footer -->
+                <div class="px-4 py-3 border-t border-gray-100 bg-gray-50 rounded-b-lg">
+                    <a href="/exercises/{{ exercise.id }}" class="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors duration-200 min-h-[36px]">
+                        View Details
+                        <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages is defined and total_pages > 1 %}
+        <nav class="flex items-center justify-center space-x-1 mb-8" aria-label="Pagination">
+            <!-- Previous Page -->
+            {% if page > 1 %}
+                <a href="/exercises?page={{ page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if muscle_group %}&muscle_group={{ muscle_group }}{% endif %}{% if equipment %}&equipment={{ equipment }}{% endif %}"
+                   class="inline-flex items-center justify-center w-10 h-10 min-w-[44px] min-h-[44px] rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 transition-colors duration-200">
+                    <span class="sr-only">Previous</span>
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                </a>
+            {% else %}
+                <span class="inline-flex items-center justify-center w-10 h-10 min-w-[44px] min-h-[44px] rounded-md border border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed">
+                    <span class="sr-only">Previous</span>
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                </span>
+            {% endif %}
+
+            <!-- Page Numbers -->
+            {% set start_page = [1, page - 2]|max %}
+            {% set end_page = [total_pages, page + 2]|min %}
+
+            {% if start_page > 1 %}
+                <a href="/exercises?page=1{% if search %}&search={{ search }}{% endif %}{% if muscle_group %}&muscle_group={{ muscle_group }}{% endif %}{% if equipment %}&equipment={{ equipment }}{% endif %}"
+                   class="inline-flex items-center justify-center w-10 h-10 min-w-[44px] min-h-[44px] rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                    1
+                </a>
+                {% if start_page > 2 %}
+                    <span class="inline-flex items-center justify-center w-10 h-10 text-sm text-gray-400">…</span>
+                {% endif %}
+            {% endif %}
+
+            {% for p in range(start_page, end_page + 1) %}
+                {% if p == page %}
+                    <span class="inline-flex items-center justify-center w-10 h-10 min-w-[44px] min-h-[44px] rounded-md border border-primary-500 bg-primary-600 text-sm font-medium text-white">
+                        {{ p }}
+                    </span>
+                {% else %}
+                    <a href="/exercises?page={{ p }}{% if search %}&search={{ search }}{% endif %}{% if muscle_group %}&muscle_group={{ muscle_group }}{% endif %}{% if equipment %}&equipment={{ equipment }}{% endif %}"
+                       class="inline-flex items-center justify-center w-10 h-10 min-w-[44px] min-h-[44px] rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                        {{ p }}
+                    </a>
+                {% endif %}
+            {% endfor %}
+
+            {% if end_page < total_pages %}
+                {% if end_page < total_pages - 1 %}
+                    <span class="inline-flex items-center justify-center w-10 h-10 text-sm text-gray-400">…</span>
+                {% endif %}
+                <a href="/exercises?page={{ total_pages }}{% if search %}&search={{ search }}{% endif %}{% if muscle_group %}&muscle_group={{ muscle_group }}{% endif %}{% if equipment %}&equipment={{ equipment }}{% endif %}"
+                   class="inline-flex items-center justify-center w-10 h-10 min-w-[44px] min-h-[44px] rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                    {{ total_pages }}
+                </a>
+            {% endif %}
+
+            <!-- Next Page -->
+            {% if page < total_pages %}
+                <a href="/exercises?page={{ page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if muscle_group %}&muscle_group={{ muscle_group }}{% endif %}{% if equipment %}&equipment={{ equipment }}{% endif %}"
+                   class="inline-flex items-center justify-center w-10 h-10 min-w-[44px] min-h-[44px] rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 transition-colors duration-200">
+                    <span class="sr-only">Next</span>
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                </a>
+            {% else %}
+                <span class="inline-flex items-center justify-center w-10 h-10 min-w-[44px] min-h-[44px] rounded-md border border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed">
+                    <span class="sr-only">Next</span>
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                </span>
+            {% endif %}
+        </nav>
+    {% endif %}
+
+{% else %}
+    <!-- Empty State -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+        <h3 class="mt-4 text-lg font-medium text-gray-900">No exercises found</h3>
+        <p class="mt-2 text-sm text-gray-500">
+            {% if search or muscle_group or equipment %}
+                Try adjusting your search or filter criteria.
+            {% else %}
+                The exercise library is empty. {% if user and user.role == 'admin' %}Add your first exercise to get started.{% else %}Check back later for exercises.{% endif %}
+            {% endif %}
+        </p>
+        <div class="mt-6 flex items-center justify-center gap-3">
+            {% if search or muscle_group or equipment %}
+                <a href="/exercises" class="inline-flex items-center px-4 py-2 min-h-[44px] rounded-md text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors duration-200">
+                    Clear Filters
+                </a>
+            {% endif %}
+            {% if user and user.role == 'admin' %}
+                <a href="/exercises/new" class="inline-flex items-center px-4 py-2 min-h-[44px] rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors duration-200 shadow-sm">
+                    <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Add Exercise
+                </a>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/app.js"></script>
+{% endblock %}

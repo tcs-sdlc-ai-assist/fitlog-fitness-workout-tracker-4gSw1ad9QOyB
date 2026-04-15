@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}{% if measurement %}Edit Measurement{% else %}New Measurement{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-6">
+        <div class="flex items-center space-x-3 mb-2">
+            <a href="/measurements" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">
+                {% if measurement %}Edit Measurement{% else %}New Measurement{% endif %}
+            </h1>
+        </div>
+        <p class="text-sm text-gray-500 ml-9">
+            {% if measurement %}Update your body measurement entry.{% else %}Record your body measurements for tracking progress.{% endif %}
+        </p>
+    </div>
+
+    <!-- Measurement Form -->
+    <form method="POST" action="{% if measurement %}/measurements/{{ measurement.id }}/edit{% else %}/measurements/new{% endif %}" data-validate class="space-y-6">
+
+        <!-- Date -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Date</h2>
+            <div>
+                <label for="measurement_date" class="block text-sm font-medium text-gray-700 mb-1">Measurement Date <span class="text-red-500">*</span></label>
+                <input
+                    type="date"
+                    id="measurement_date"
+                    name="measurement_date"
+                    value="{{ measurement.measurement_date if measurement and measurement.measurement_date else today if today is defined else '' }}"
+                    required
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 min-h-[44px] text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+            </div>
+        </div>
+
+        <!-- Weight & Body Fat -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Weight & Body Composition</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="weight" class="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
+                    <input
+                        type="number"
+                        id="weight"
+                        name="weight"
+                        value="{{ measurement.weight if measurement and measurement.weight is not none else '' }}"
+                        step="0.1"
+                        min="0"
+                        placeholder="e.g. 75.5"
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 min-h-[44px] text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                </div>
+                <div>
+                    <label for="body_fat_pct" class="block text-sm font-medium text-gray-700 mb-1">Body Fat (%)</label>
+                    <input
+                        type="number"
+                        id="body_fat_pct"
+                        name="body_fat_pct"
+                        value="{{ measurement.body_fat_pct if measurement and measurement.body_fat_pct is not none else '' }}"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        placeholder="e.g. 15.0"
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 min-h-[44px] text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                </div>
+            </div>
+        </div>
+
+        <!-- Upper Body Measurements -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Upper Body (cm)</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="chest" class="block text-sm font-medium text-gray-700 mb-1">Chest</label>
+                    <input
+                        type="number"
+                        id="chest"
+                        name="chest"
+                        value="{{ measurement.chest if measurement and measurement.chest is not none else '' }}"
+                        step="0.1"
+                        min="0"
+                        placeholder="e.g. 100.0"
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 min-h-[44px] text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                </div>
+                <div>
+                    <label for="waist" class="block text-sm font-medium text-gray-700 mb-1">Waist</label>
+                    <input
+                        type="number"
+                        id="waist"
+                        name="waist"
+                        value="{{ measurement.waist if measurement and measurement.waist is not none else '' }}"
+                        step="0.1"
+                        min="0"
+                        placeholder="e.g. 80.0"
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 min-h-[44px] text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                </div>
+                <div>
+                    <label for="hips" class="block text-sm font-medium text-gray-700 mb-1">Hips</label>
+                    <input
+                        type="number"
+                        id="hips"
+                        name="hips"
+                        value="{{ measurement.hips if measurement and measurement.hips is not none else '' }}"
+                        step="0.1"
+                        min="0"
+                        placeholder="e.g. 95.0"
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 min-h-[44px] text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                </div>
+                <div>
+                    <label for="biceps" class="block text-sm font-medium text-gray-700 mb-1">Biceps</label>
+                    <input
+                        type="number"
+                        id="biceps"
+                        name="biceps"
+                        value="{{ measurement.biceps if measurement and measurement.biceps is not none else '' }}"
+                        step="0.1"
+                        min="0"
+                        placeholder="e.g. 35.0"
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 min-h-[44px] text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                </div>
+            </div>
+        </div>
+
+        <!-- Lower Body Measurements -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Lower Body (cm)</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="thighs" class="block text-sm font-medium text-gray-700 mb-1">Thighs</label>
+                    <input
+                        type="number"
+                        id="thighs"
+                        name="thighs"
+                        value="{{ measurement.thighs if measurement and measurement.thighs is not none else '' }}"
+                        step="0.1"
+                        min="0"
+                        placeholder="e.g. 55.0"
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 min-h-[44px] text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Notes</h2>
+            <div>
+                <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
+                <textarea
+                    id="notes"
+                    name="notes"
+                    rows="3"
+                    placeholder="Any notes about this measurement (e.g. morning, fasted, post-workout)"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 min-h-[44px] text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-y"
+                >{{ measurement.notes if measurement and measurement.notes else '' }}</textarea>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-3 pb-6">
+            <button
+                type="submit"
+                class="w-full sm:w-auto px-6 py-3 min-h-[44px] bg-primary-600 text-white font-semibold rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors duration-200 shadow-sm"
+            >
+                {% if measurement %}Update Measurement{% else %}Save Measurement{% endif %}
+            </button>
+            <a
+                href="/measurements"
+                class="w-full sm:w-auto px-6 py-3 min-h-[44px] bg-white text-gray-700 font-semibold rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors duration-200 text-center"
+            >
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/app.js"></script>
+<script>
+    {% if existing_dates is defined and existing_dates %}
+    window.__existingMeasurementDates = {{ existing_dates | tojson }};
+    {% endif %}
+</script>
+{% endblock %}

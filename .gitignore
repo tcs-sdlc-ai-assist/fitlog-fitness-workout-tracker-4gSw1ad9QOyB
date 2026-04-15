@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+fitlog.db
+alembic/versions/*.py
+.pytest_cache/
+.DS_Store
+dist/
+build/
+.venv/
+*.egg-info/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
